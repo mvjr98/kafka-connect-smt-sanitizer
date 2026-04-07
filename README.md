@@ -23,14 +23,34 @@ This SMT removes configured characters early in the pipeline.
   - Default: `00`
   - Example: `00,08,11`
 
+### Pattern reference
+
+- `00` (`\u0000`, null byte): required for PostgreSQL `TEXT`/`VARCHAR` compatibility
+- `08` (`\b`, backspace): optional cleanup for control characters
+- `11` (`\u0011`, device control): optional cleanup for control characters
+
+Recommended rollout:
+
+1. Start with `patterns: "00"` (minimal and safest)
+2. Add `08,11` only if you see dirty control characters in payloads
+
+### Behavior
+
+This SMT removes configured characters. It does not replace them with another symbol.
+
+Example:
+
+- Input: `abc\u0000def`
+- Output: `abcdef`
+
 ## Example connector snippet
 
 ```yaml
 transforms: sanitize,unwrap,renameKey,renameValue
 
 transforms.sanitize.type: com.company.kafka.connect.transform.SanitizeString
-transforms.sanitize.fields: "OBSERVACOES,OBSERVACOESPUBLICACAO,OBSCANCELAMENTO,TEXTODECISOES,CONTEUDOINTIMACAO,OBSERVACAOPERICIA"
-transforms.sanitize.patterns: "00,08,11"
+transforms.sanitize.fields: "OBSERVACOES"
+transforms.sanitize.patterns: "00"
 
 transforms.unwrap.type: io.debezium.transforms.ExtractNewRecordState
 ```
