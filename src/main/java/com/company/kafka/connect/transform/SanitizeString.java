@@ -19,8 +19,11 @@ import java.util.Set;
 
 public class SanitizeString<R extends ConnectRecord<R>> implements Transformation<R> {
 
+    private static final String DEBEZIUM_UNAVAILABLE_VALUE = "__debezium_unavailable_value";
+
     private Set<String> fieldsToSanitize;
     private List<Character> charsToRemove;
+    private boolean replaceDebeziumUnavailable;
     private final Map<Schema, Schema> schemaCache = Collections.synchronizedMap(new HashMap<>());
 
     @Override
@@ -62,6 +65,7 @@ public class SanitizeString<R extends ConnectRecord<R>> implements Transformatio
             }
         }
         charsToRemove = toRemove;
+        replaceDebeziumUnavailable = config.replaceDebeziumUnavailableValue();
     }
 
     @Override
@@ -163,6 +167,11 @@ public class SanitizeString<R extends ConnectRecord<R>> implements Transformatio
                 continue;
             }
 
+            if (replaceDebeziumUnavailable && DEBEZIUM_UNAVAILABLE_VALUE.equals(raw)) {
+                target.put(fieldName, null);
+                continue;
+            }
+
             Schema fieldSchema = targetField.schema();
             switch (fieldSchema.type()) {
                 case STRING:
@@ -190,6 +199,8 @@ public class SanitizeString<R extends ConnectRecord<R>> implements Transformatio
             Object raw = entry.getValue();
 
             if (raw == null) {
+                target.put(fieldName, null);
+            } else if (replaceDebeziumUnavailable && DEBEZIUM_UNAVAILABLE_VALUE.equals(raw)) {
                 target.put(fieldName, null);
             } else if (raw instanceof String) {
                 target.put(fieldName, shouldSanitizeField(fieldName) ? sanitizeString((String) raw) : raw);

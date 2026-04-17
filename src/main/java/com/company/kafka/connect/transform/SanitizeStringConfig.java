@@ -10,6 +10,7 @@ public class SanitizeStringConfig extends AbstractConfig {
 
     public static final String FIELDS_CONFIG = "fields";
     public static final String PATTERNS_CONFIG = "patterns";
+    public static final String REPLACE_DEBEZIUM_UNAVAILABLE_CONFIG = "replace.debezium.unavailable.value";
 
     public static final ConfigDef CONFIG_DEF = new ConfigDef()
         .define(
@@ -25,6 +26,13 @@ public class SanitizeStringConfig extends AbstractConfig {
             "00",
             ConfigDef.Importance.HIGH,
             "Comma-separated list of hex character codes to remove (example: 00,08,11)."
+        )
+        .define(
+            REPLACE_DEBEZIUM_UNAVAILABLE_CONFIG,
+            ConfigDef.Type.BOOLEAN,
+            false,
+            ConfigDef.Importance.MEDIUM,
+            "Replace __debezium_unavailable_value with null."
         );
 
     public SanitizeStringConfig(Map<?, ?> originals) {
@@ -37,5 +45,9 @@ public class SanitizeStringConfig extends AbstractConfig {
 
     public List<String> getPatterns() {
         return getList(PATTERNS_CONFIG);
+    }
+
+    public boolean replaceDebeziumUnavailableValue() {
+        return getBoolean(REPLACE_DEBEZIUM_UNAVAILABLE_CONFIG);
     }
 }
